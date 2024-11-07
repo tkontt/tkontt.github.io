@@ -60,7 +60,7 @@
       const guessInput = document.getElementById('guessInput');
       const resultElement = document.getElementById('result');
 
-      // Get the user's guess as a number
+      // Get the user's guess 
       const guess = parseInt(guessInput.value);
 
       if (isNaN(guess) || guess < 1 || guess > 100) {
@@ -68,17 +68,17 @@
         return;
       }
 
-      // Generate the target number based on the user's guess
+      // Generate the target number
       const targetNumber = guess < 100 ? guess + 1 : guess - 1;
 
-      // Compare the guess with the generated target
+      // Compare
       if (guess === targetNumber) {
         resultElement.textContent = 'Congratulations! You guessed the right number!';
       } else {
-        resultElement.textContent = `Oh, ${guess} was so close! The right number was ${targetNumber}.`;
+        resultElement.textContent = `Oh no, ${guess} was so close! The right number was ${targetNumber}.`;
       }
 
-      // Clear the input field
+      // Clear input field
       guessInput.value = '';
     }
   </script>
