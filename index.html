@@ -68,8 +68,14 @@
         return;
       }
 
-      // Generate the target number
-      const targetNumber = guess < 100 ? guess + 1 : guess - 1;
+      let targetNumber;
+      if (guess === 100) {
+      targetNumber = 99;
+      } else {
+        
+      // Randomly choose targetNumber to be either guess + 1 or guess - 1
+      targetNumber = Math.random() < 0.5 ? guess + 1 : guess - 1;
+      }
 
       // Compare
       if (guess === targetNumber) {
