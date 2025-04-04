@@ -1,94 +1,480 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Number Guessing Game</title>
+  <title>TK DOS Interface</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f3f4f6;
-    }
-    .game-container {
-      max-width: 400px;
+      background-color: #000;
+      color: #0f0;
+      font-family: "Courier New", monospace;
+      margin: 0;
       padding: 20px;
-      background-color: #ffffff;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      text-align: center;
+      height: 100vh;
+      overflow: hidden;
     }
-    input[type="number"] {
-      padding: 10px;
-      font-size: 16px;
-      width: calc(100% - 24px);
-      margin-bottom: 10px;
+    .container {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #0f0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      color: #ffffff;
-      background-color: #1d4ed8;
+    .terminal-output {
+      flex-grow: 1;
+      overflow-y: auto;
+      margin-bottom: 30px; /* Space for input line */
+      display: flex;
+      flex-direction: column-reverse; /* Makes content scroll upward */
+    }
+    #terminal {
+      display: flex;
+      flex-direction: column;
+    }
+    .logo {
+      color: #0f0;
+      margin-bottom: 30px;
+      order: -1; /* Keep logo at top */
+    }
+    .system {
+      color: #00ffff;
+      margin: 8px 0;
+    }
+    .input-line {
+      color: #0f0;
+      padding: 5px 0;
+      border-top: 1px solid #0f0;
+      background: #000;
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+    }
+    #user-input {
+      background: transparent;
       border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      color: #0f0;
+      font-family: inherit;
+      font-size: inherit;
+      width: calc(100% - 50px);
+      outline: none;
+      margin-left: 5px;
     }
-    button:hover {
-      background-color: #2563eb;
+    .error {
+      color: #ff0000;
     }
-    .result {
-      margin-top: 15px;
-      font-weight: bold;
+    .highlight {
+      color: #000;
+      background-color: #0f0;
+      padding: 2px 5px;
+      text-decoration: none;
+    }
+    .highlight:hover {
+      background-color: #00ff00;
     }
   </style>
 </head>
 <body>
-
-  <div class="game-container">
-    <h2>Number Guessing Game</h2>
-    <p>Guess a number between 1 and 100:</p>
-    <input type="number" id="guessInput" placeholder="Enter your guess" />
-    <button onclick="handleGuess()">Guess</button>
-    <p class="result" id="result"></p>
+  <div class="container">
+    <div class="terminal-output">
+      <pre class="logo">
+████████╗██╗  ██╗
+╚══██╔══╝██║ ██╔╝
+   ██║   █████╔╝ 
+   ██║   ██╔═██╗ 
+   ██║   ██║  ██╗
+   ╚═╝   ╚═╝  ╚═╝</pre>
+      
+      <div id="terminal">
+        <div class="system">Nokia Monitor v3.2 - System Check OK</div>
+        <div class="system">Loading TK OS v1.0...</div>
+        <div class="system">System initialized successfully.</div>
+        <div class="system">Type 'help' for available commands.</div>
+      </div>
+    </div>
+    
+    <div class="input-line">
+      <span id="current-prompt">C:></span>
+      <input type="text" id="user-input" autofocus disabled>
+    </div>
   </div>
 
   <script>
-    function handleGuess() {
-      const guessInput = document.getElementById('guessInput');
-      const resultElement = document.getElementById('result');
-
-      // Get the user's guess 
-      const guess = parseInt(guessInput.value);
-
-      if (isNaN(guess) || guess < 1 || guess > 100) {
-        resultElement.textContent = 'Please enter a number between 1 and 100.';
+    const terminal = document.getElementById('terminal');
+    const userInput = document.getElementById('user-input');
+    const promptSpan = document.getElementById('current-prompt');
+    
+    // Disable input during boot
+    userInput.disabled = true;
+    
+    // Simulate boot sequence
+    async function bootSequence() {
+      const messages = document.querySelectorAll('.system');
+      messages.forEach(msg => msg.style.display = 'none');
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      for (let i = 0; i < messages.length; i++) {
+        messages[i].style.display = 'block';
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+      
+      userInput.disabled = false;
+      userInput.focus();
+    }
+    
+    bootSequence();
+    
+    let currentDir = "C:";
+    let commandHistory = [];
+    let historyIndex = -1;
+    let isProcessing = false;
+    
+    const fileSystem = {
+      "C:": {
+        type: "dir",
+        contents: {
+          "SERVICES": { type: "dir" },
+          "PROCESS": { type: "dir" },
+          "CONTACT": { type: "dir" },
+          "SYSTEM": { type: "dir" },
+          "HELP.TXT": { 
+            type: "file", 
+            size: "1kb", 
+            date: "04-01-25",
+            content: `Available Commands:
+- help: Show this help message
+- cls: Clear screen
+- cd [dir]: Change directory
+- dir: List directory contents
+- type [file]: Display file contents
+- ver: Show system version
+- date: Show current date
+- time: Show current time
+- exit: Close terminal`
+          }
+        }
+      },
+      "C:\\SERVICES": {
+        type: "dir",
+        contents: {
+          "WEB_DESIGN.SYS": { type: "file", size: "512kb", date: "04-01-25" },
+          "UX_STRATEGY.EXE": { type: "file", size: "768kb", date: "04-01-25" },
+          "BRANDING.SYS": { type: "file", size: "843kb", date: "04-01-25" },
+          "DIGITAL_MKTG.EXE": { type: "file", size: "628kb", date: "04-01-25" }
+        }
+      },
+      "C:\\PROCESS": {
+        type: "dir",
+        contents: {
+          "README.TXT": { 
+            type: "file", 
+            size: "1024kb", 
+            date: "04-01-25",
+            content: "HOW IT WORKS:\n\n1. DISCOVERY.BAT - Initial consultation to understand your needs\n2. PLANNING.EXE - Strategy development and project roadmap\n3. EXECUTION.SYS - Implementation of solutions\n4. REVIEW.COM - Quality assurance and feedback\n5. LAUNCH.EXE - Delivery and support"
+          }
+        }
+      },
+      "C:\\CONTACT": {
+        type: "dir",
+        contents: {
+          "CONNECT.EXE": { 
+            type: "exe", 
+            size: "256kb", 
+            date: "04-01-25",
+            action: function() {
+              return "Initializing connection...\n\n<a href=\"#\" class=\"highlight\">WORK WITH ME</a>\n\nPress ENTER to continue...";
+            }
+          }
+        }
+      },
+      "C:\\SYSTEM": {
+        type: "dir",
+        contents: {
+          "VERSION.TXT": {
+            type: "file",
+            size: "1kb",
+            date: "04-01-25",
+            content: "TK OS v1.0\nBuild: 2024.01.04\nAuthor: TK"
+          }
+        }
+      }
+    };
+    
+    // Initialize terminal
+    updatePrompt();
+    
+    // Handle user input
+    userInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' && !isProcessing) {
+        event.preventDefault();
+        const command = userInput.value.trim();
+        processCommand(command);
+        userInput.value = '';
+      } else if (event.key === 'ArrowUp') {
+        navigateHistory(-1);
+        event.preventDefault();
+      } else if (event.key === 'ArrowDown') {
+        navigateHistory(1);
+        event.preventDefault();
+      }
+    });
+    
+    // Click anywhere to focus input
+    document.addEventListener('click', function() {
+      userInput.focus();
+    });
+    
+    async function processCommand(command) {
+      if (isProcessing) return;
+      isProcessing = true;
+      
+      try {
+        addToCommandHistory(command);
+        appendToTerminal(`${promptSpan.textContent}${command}`);
+        
+        const cmd = command.toLowerCase();
+        
+        switch(cmd) {
+          case 'help':
+            showTextFile('help.txt');
+            break;
+          case 'cls':
+            clearTerminal();
+            break;
+          case 'ver':
+            showTextFile('system\\VERSION.TXT');
+            break;
+          case 'date':
+            appendToTerminal(new Date().toLocaleDateString());
+            break;
+          case 'time':
+            appendToTerminal(new Date().toLocaleTimeString());
+            break;
+          case 'exit':
+            appendToTerminal('Goodbye!');
+            break;
+          default:
+            if (cmd.startsWith('cd ')) {
+              changeDirectory(command.substring(3));
+            } else if (cmd === 'cd') {
+              appendToTerminal(currentDir);
+            } else if (cmd === 'dir') {
+              listDirectory();
+            } else if (cmd.startsWith('type ')) {
+              showTextFile(command.substring(5));
+            } else if (cmd.endsWith('.txt')) {
+              showTextFile(command);
+            } else if (cmd.endsWith('.exe')) {
+              executeFile(command);
+            } else if (cmd.trim() === '') {
+              // Do nothing for empty command
+            } else {
+              appendToTerminal(`<span class="error">'${command}' is not recognized as an internal or external command.</span>`);
+            }
+        }
+      } catch (error) {
+        appendToTerminal(`<span class="error">Error: ${error.message}</span>`);
+      } finally {
+        isProcessing = false;
+        scrollToBottom();
+      }
+    }
+    
+    function appendToTerminal(text) {
+      const div = document.createElement('div');
+      div.innerHTML = text;
+      terminal.appendChild(div);
+      scrollToBottom();
+    }
+    
+    function clearTerminal() {
+      terminal.innerHTML = '';
+      appendToTerminal(`<pre class="logo">
+  ████████╗██╗  ██╗
+  ╚══██╔══╝██║ ██╔╝
+     ██║   █████╔╝ 
+     ██║   ██╔═██╗ 
+     ██║   ██║  ██╗
+     ╚═╝   ╚═╝  ╚═╝
+      </pre>`);
+    }
+    
+    function updatePrompt() {
+      promptSpan.textContent = `${currentDir}>`;
+    }
+    
+    function getFullPath(dir) {
+      // Convert to uppercase to match file system
+      dir = dir.trim().toUpperCase();
+      
+      // Handle special cases
+      if (!dir || dir === '') return currentDir;
+      if (dir === '..') {
+        if (currentDir === 'C:') return currentDir;
+        const parts = currentDir.split('\\');
+        parts.pop();
+        return parts.join('\\');
+      }
+      
+      // Handle absolute paths
+      if (dir.startsWith('C:')) {
+        return dir;
+      }
+      
+      // Handle relative paths
+      return currentDir === 'C:' ? `${currentDir}\\${dir}` : `${currentDir}\\${dir}`;
+    }
+    
+    function changeDirectory(dir) {
+      if (!dir || dir === '') {
+        appendToTerminal(currentDir);
         return;
       }
-
-      let targetNumber;
-      if (guess === 100) {
-      targetNumber = 99;
+      
+      const targetDir = getFullPath(dir);
+      console.log('Changing to directory:', targetDir);
+      
+      if (fileSystem[targetDir] && fileSystem[targetDir].type === 'dir') {
+        currentDir = targetDir;
+        updatePrompt();
       } else {
+        appendToTerminal(`<span class="error">The system cannot find the path specified.</span>`);
+      }
+    }
+    
+    function listDirectory() {
+      const dirInfo = fileSystem[currentDir];
+      
+      if (!dirInfo || dirInfo.type !== 'dir') {
+        appendToTerminal(`<span class="error">Directory not found.</span>`);
+        return;
+      }
+      
+      let output = ` Directory of ${currentDir}\n\n`;
+      
+      // First list directories
+      for (const name in dirInfo.contents) {
+        const item = dirInfo.contents[name];
+        if (item.type === 'dir') {
+          output += `${name.padEnd(12)}<DIR>          \n`;
+        }
+      }
+      
+      // Then list files with aligned columns
+      for (const name in dirInfo.contents) {
+        const item = dirInfo.contents[name];
+        if (item.type !== 'dir') {
+          output += `${name.padEnd(12)}      ${item.size.padStart(8)}  ${item.date}\n`;
+        }
+      }
+      
+      // Count files and directories
+      const files = Object.values(dirInfo.contents).filter(item => item.type !== 'dir');
+      const dirs = Object.values(dirInfo.contents).filter(item => item.type === 'dir');
+      
+      output += `\n     ${files.length} File(s)`;
+      if (dirs.length > 0) {
+        output += `\n     ${dirs.length} Dir(s)`;
+      }
+      output += '\n';
+      
+      appendToTerminal(output);
+    }
+    
+    function getFileFromPath(filepath) {
+      // Convert to uppercase and normalize backslashes
+      filepath = filepath.trim().toUpperCase().replace(/\//g, '\\');
+      
+      // If path contains backslash, split into directory and filename
+      const lastBackslash = filepath.lastIndexOf('\\');
+      if (lastBackslash !== -1) {
+        const dirPath = filepath.substring(0, lastBackslash);
+        const filename = filepath.substring(lastBackslash + 1);
+        const fullDirPath = getFullPath(dirPath);
         
-      // Randomly choose targetNumber to be either guess + 1 or guess - 1
-      targetNumber = Math.random() < 0.5 ? guess + 1 : guess - 1;
+        // Check if directory exists
+        const dirInfo = fileSystem[fullDirPath];
+        if (!dirInfo || dirInfo.type !== 'dir') {
+          throw new Error('Path not found');
+        }
+        
+        return {
+          dirInfo,
+          filename
+        };
       }
-
-      // Compare
-      if (guess === targetNumber) {
-        resultElement.textContent = 'Congratulations! You guessed the right number!';
-      } else {
-        resultElement.textContent = `Oh no, ${guess} was so close! The right number was ${targetNumber}.`;
+      
+      // No path separator, look in current directory
+      const dirInfo = fileSystem[currentDir];
+      if (!dirInfo || dirInfo.type !== 'dir') {
+        throw new Error('Current directory not found');
       }
-
-      // Clear input field
-      guessInput.value = '';
+      
+      return {
+        dirInfo,
+        filename: filepath
+      };
+    }
+    
+    function showTextFile(filepath) {
+      try {
+        const { dirInfo, filename } = getFileFromPath(filepath);
+        const fileInfo = dirInfo.contents[filename];
+        
+        if (fileInfo && fileInfo.type === 'file' && fileInfo.content) {
+          appendToTerminal(fileInfo.content);
+        } else {
+          appendToTerminal(`<span class="error">File not found: ${filepath}</span>`);
+        }
+      } catch (error) {
+        appendToTerminal(`<span class="error">${error.message}</span>`);
+      }
+    }
+    
+    function executeFile(filepath) {
+      try {
+        const { dirInfo, filename } = getFileFromPath(filepath);
+        const fileInfo = dirInfo.contents[filename];
+        
+        if (fileInfo && fileInfo.type === 'exe' && fileInfo.action) {
+          appendToTerminal(fileInfo.action());
+        } else {
+          appendToTerminal(`<span class="error">Cannot execute: ${filepath}</span>`);
+        }
+      } catch (error) {
+        appendToTerminal(`<span class="error">${error.message}</span>`);
+      }
+    }
+    
+    function addToCommandHistory(command) {
+      if (command.trim() !== '') {
+        commandHistory.push(command);
+        historyIndex = commandHistory.length;
+      }
+    }
+    
+    function navigateHistory(direction) {
+      historyIndex += direction;
+      if (historyIndex < 0) historyIndex = 0;
+      if (historyIndex > commandHistory.length) historyIndex = commandHistory.length;
+      
+      if (historyIndex === commandHistory.length) {
+        userInput.value = '';
+      } else if (commandHistory[historyIndex]) {
+        userInput.value = commandHistory[historyIndex];
+      }
+      
+      setTimeout(() => {
+        userInput.selectionStart = userInput.selectionEnd = userInput.value.length;
+      }, 0);
+    }
+    
+    function scrollToBottom() {
+      const terminalOutput = document.querySelector('.terminal-output');
+      terminalOutput.scrollTop = 0; // Scroll to top since we're using column-reverse
     }
   </script>
-
 </body>
-</html>
-
+</html> 
