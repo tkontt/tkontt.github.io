@@ -24,18 +24,23 @@
     .terminal-output {
       flex-grow: 1;
       overflow-y: auto;
-      margin-bottom: 30px; /* Space for input line */
+      margin-bottom: 30px;
       display: flex;
-      flex-direction: column-reverse; /* Makes content scroll upward */
+      flex-direction: column;
+      position: relative;
     }
     #terminal {
       display: flex;
       flex-direction: column;
+      margin-top: 20px;
     }
     .logo {
       color: #0f0;
-      margin-bottom: 30px;
-      order: -1; /* Keep logo at top */
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin: 0;
+      padding: 0;
     }
     .system {
       color: #00ffff;
@@ -473,8 +478,8 @@
     
     function scrollToBottom() {
       const terminalOutput = document.querySelector('.terminal-output');
-      terminalOutput.scrollTop = 0; // Scroll to top since we're using column-reverse
+      terminalOutput.scrollTop = terminalOutput.scrollHeight;
     }
   </script>
 </body>
-</html> 
+</html>  
